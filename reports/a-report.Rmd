@@ -1,12 +1,14 @@
 ---
-title: "REPLACE ME"
+title: "Atividade dos parlamentares do Twitter"
+author: "Thalyta Fabrine da Trindade"
+date: "05 de abril de 2019"
 output:
     html_document:
     df_print: paged
 theme: sandstone
 ---
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
 library(tidyverse)
 source(here::here("code/lib.R"))
 theme_set(theme_bw())
@@ -14,4 +16,34 @@ theme_set(theme_bw())
 
 ```{r read}
 atividade = read_projectdata()
+```
+
+### Quais estados possuem mais parlamentares ativos no Twitter?
+
+
+``` {r}
+atividade %>% 
+  mutate(tem_twitter = !is.na(twitter)) %>%
+  filter(tem_twitter) %>%
+  group_by(UF) %>%
+  summarise(total_contas = sum(tem_twitter)) %>%
+  ggplot(aes(x = reorder(UF, total_contas), y = total_contas)) +
+  geom_point(color = "#5fd5d4") + 
+  labs(x = "Total de contas de parlamentares no Twitter", 
+       y = "Estado")
+```
+
+### Quais partidos têm mais seguidores?
+
+``` {r}
+atividade %>%
+  mutate(tem_twitter = !is.na(twitter)) %>%
+  filter(tem_twitter, !is.na(seguidores)) %>%
+  group_by(partido) %>%
+  summarise(total_seguidores = sum(seguidores)) %>%
+  ggplot(aes(x = reorder(partido, total_seguidores), y = total_seguidores)) +
+  geom_col() +
+  coord_flip() + 
+  labs(x = "Partido",
+       y = "Total de seguidores no Twitter")
 ```
