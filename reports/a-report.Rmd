@@ -7,6 +7,7 @@ output:
     df_print: paged
 theme: sandstone
 ---
+## Preparação do ambiente
 
 ```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
 library(tidyverse)
@@ -17,6 +18,8 @@ theme_set(theme_bw())
 ```{r read}
 atividade = read_projectdata()
 ```
+
+## Análises
 
 ### Quais estados possuem mais parlamentares ativos no Twitter?
 
@@ -29,9 +32,11 @@ atividade %>%
   summarise(total_contas = sum(tem_twitter)) %>%
   ggplot(aes(x = reorder(UF, total_contas), y = total_contas)) +
   geom_point(color = "#5fd5d4") + 
-  labs(x = "Total de contas de parlamentares no Twitter", 
-       y = "Estado")
+  labs(x = "Estado", 
+       y = "Total de contas de parlamentares no Twitter")
 ```
+
+É interessante notar que os estados com mais parlamentares ativos são justamente os estados que têm uma quantidade maior de parlamentares devido ao seu tamanho.
 
 ### Quais partidos têm mais seguidores?
 
@@ -41,9 +46,62 @@ atividade %>%
   filter(tem_twitter, !is.na(seguidores)) %>%
   group_by(partido) %>%
   summarise(total_seguidores = sum(seguidores)) %>%
-  ggplot(aes(x = reorder(partido, total_seguidores), y = total_seguidores)) +
+  ggplot(aes(x = reorder(partido, total_seguidores), y = total_seguidores, fill = partido)) +
   geom_col() +
   coord_flip() + 
+  theme(legend.position = "none") +
   labs(x = "Partido",
        y = "Total de seguidores no Twitter")
 ```
+
+O esperado era que os partidos com mais seguidores sejam justamente os que estão mais presentes nas mídias, bem como os que foram mais votados. No entanto, percebe-se que o partido PODE tem um número significativamente maior que todos os outros partidos. O PODE, no entanto, não foi um partido com grande popularidade nas últimas eleições, por exemplo: seu candidato à presidência, Álvaro Dias, ficou em nona colocação e foram poucos os deputados eleitos pelo partido.
+
+### Dessa forma, de onde vem essa enorme quantidade de seguidores do PODE?
+
+``` {r}
+atividade %>%
+  filter(partido == "PODE", !is.na(seguidores)) %>%
+  ggplot(aes(x = reorder(nome_eleitoral, seguidores), y = seguidores)) +
+  geom_point() +
+  coord_flip() +
+  labs(x = "Parlamentar",
+       y = "Total de seguidores no Twitter")
+```
+
+Vemos que a maioria dos seguidores do PODE estão concentradas em um único perfil: o de Romário. Romário é considerado um dos melhores jogadores de futebol, e portanto é uma pessoa muito famosa. Levando isso em conta, podemos considerar que, na verdade, a popularidade do PODE nas redes sociais não se dá diretamente pela influência do partido, mas sim pela figura pública de Romário que provavelmente já tinha uma enorme quantidade de seguidores antes mesmo de ser filiado ao partido.
+
+### Os parlamentares com mais seguidores são também os que possuem um maior engajamento do público no Twitter?
+
+Primeiramente, para facilitar o entendimento, vamos analisar quem são os parlamentares com mais seguidores no Twitter. Utilizaremos apenas aqueles que possuam mais de 350 mil seguidores.
+
+``` {r}
+mais_seguidos <- atividade %>%
+  filter(!is.na(seguidores), seguidores > 350000)
+
+mais_seguidos %>%
+  ggplot(aes(x = reorder(nome_eleitoral, seguidores), y = seguidores, fill = nome_eleitoral)) +
+  geom_col() +
+  coord_flip() +
+  theme(legend.position = "none") +
+  labs(x = "Parlamentar",
+       y = "Total de seguidores no Twitter")
+```
+
+É possível notar que o parlamentar com mais seguidores entre todos os listados é, ainda, Romário. Logo em seguida vêm, por maior número de seguidores, José Serra, Flávio Bolsonaro e Marcelo Freixo.
+
+Agora, vamos analisar se estes são também os perfis que possuem um maior engajamento.
+Para selecionar os que possuem maior engajamento no Twitter, vamos filtrar pelo engajamento total e mediano.
+
+```{r}
+mais_engaj <- atividade %>% 
+  filter(!is.na(twitter), engaj_total > 350000, engaj_mediano > 50)
+
+mais_engaj %>%
+    ggplot(aes(x = reorder(nome_eleitoral, engaj_total), y = engaj_total)) + 
+    geom_col() +
+    coord_flip() + 
+    labs(x = "Parlamentar", 
+         y = "Engajamento total no Twitter")
+```
+
+Vemos que Romário e José Serra, os dois mais seguidos, nem sequer aparecem entre os que possuem um maior engajamento. Em seguida, dos mais seguidos é possível notar que Marcelo Freixo é o que possui um engajamento maior. Mas ainda assim, nenhum entre os mais seguidos são o perfil com mais engajamento no Twitter, sendo este Carla Zambelli, deputada federal eleita em SP filiada ao PSL.
